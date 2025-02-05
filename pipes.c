@@ -12,11 +12,11 @@
 #include <termios.h>
 
 struct point {
-	short x;
-	short y;
+        short x;
+        short y;
 };
 
-wchar_t charSet[] = L"┃┏┓┛━┓┗┃┛┗┏━";
+wchar_t charSet[] = L"┃┏┓┛━┗";
 int rows, columns;
 struct winsize w;
 
@@ -83,7 +83,6 @@ void checkWindowDimensions() {
 }
 
 void init() {
-  checkWindowDimensions();
   signal(SIGINT, sig_handler);
   srand(time(NULL));
 
@@ -92,87 +91,106 @@ void init() {
 }
 
 int main() {
-	init();
-	enum direction { Up, Left, Down, Right };
-	enum direction dir;
-	freopen(NULL, "w", stdout);
-	setlocale(LC_ALL, "en_US.utf8");
+        init();
+        enum direction { Up, Left, Down, Right };
+        enum direction dir;
+        enum direction lastDir;
+        freopen(NULL, "w", stdout);
+        setlocale(LC_ALL, "en_US.utf8");
 
-	struct point lastPoint;
-	lastPoint.x = columns / 2;
-	lastPoint.y = rows / 2;
-	int count = 0;
+        struct point lastPoint;
+        lastPoint.x = columns / 2;
+        lastPoint.y = rows / 2;
+        int count = 0;
         while (1) {
-		if(lastPoint.x == -1) {
-			short x = 0, y = 0;
-			if(rand() % 2 == 0) {
-				x = rand() % columns;
-				if(rand() % 2 == 0) {
-					y = rows;
-					dir = Up;
-				}
-				else
-					dir = Down;
-			}
-			else {
-				y = rand() % rows;
-				if(rand() % 2 == 0) {
-					x = columns;
-					dir = Left;
-				}
-				else
-					dir = Right;
-			}
-			lastPoint.x = x;
-			lastPoint.y = y;
-		}
-			moveCursorTo(lastPoint.y, lastPoint.x);
-			wchar_t c;
-			switch(dir) {
-				case Up:
-					c = charSet[0];
-					lastPoint.y--;
-					break;
-				case Down:
-					c = charSet[0];
-					lastPoint.y++;
-					break;
-				case Left:
-					c = charSet[11];
-					lastPoint.x--;
-					break;
-				case Right:
-					c = charSet[11];
-					lastPoint.x++;
-					break;
-			}
-			wprintf(L"%lc", c);
-			fflush(stdout);
-			if(lastPoint.x < 0 || lastPoint.x > columns || lastPoint.y < 0 || lastPoint.y > rows) {
-				lastPoint.x = -1; //RESET
-    				int rndColor = 90 + rand() % 7 + 1;
-				if(rndColor == 93)
-					rndColor = 33;
-				wprintf(L"\x1b[%dm", rndColor);
-				if(count > rows * columns / 2) {
-					system("clear");
-					count = 0;
-				}
-			}
+                checkWindowDimensions();
+                if(lastPoint.x == -1) {
+                        short x = 0, y = 0;
+                        if(rand() % 2 == 0) {
+                                x = rand() % columns;
+                                if(rand() % 2 == 0) {
+                                        y = rows;
+                                        dir = Up;
+                                }
+                                else
+                                        dir = Down;
+                        }
+                        else {
+                                y = rand() % rows;
+                                if(rand() % 2 == 0) {
+                                        x = columns;
+                                        dir = Left;
+                                }
+                                else
+                                        dir = Right;
+                        }
+                        lastPoint.x = x;
+                        lastPoint.y = y;
+                }
+                        moveCursorTo(lastPoint.y, lastPoint.x);
+                        short i = 0;
+                        switch(dir) {
+                                case Up:
+                                        if(lastDir == Left)
+                                                i = 5;
+                                        else if(lastDir == Right)
+                                                i = 3;
 
-		if(rand() % 10 == 0) {
-			if(rand() % 2 == 0)
-				dir = (dir + 1) % 4;
-			else
-				dir = (dir - 1 + 4) % 4;
-		}
+                                        lastPoint.y--;
+                                        break;
+                                case Down:
+                                        if(lastDir == Left)
+                                                i = 1;
+                                        else if(lastDir == Right)
+                                                i = 2;
 
-		int time = 8000;
-		if(dir == Up || dir == Down)
-			time *= 3;
+                                        lastPoint.y++;
+                                        break;
+                                case Left:
+                                        i = 4;
+                                        if(lastDir == Down)
+                                                i = 3;
+                                        else if(lastDir == Up)
+                                                i = 2;
+                                        lastPoint.x--;
+                                        break;
+                                case Right:
+                                        i = 4;
+                                        if(lastDir == Down)
+                                                i = 5;
+                                        else if(lastDir == Up)
+                                                i = 1;
+                                        lastPoint.x++;
+                                        break;
+                        }
+                        wprintf(L"%lc", charSet[i]);
+                        fflush(stdout);
+                        if(lastPoint.x < 0 || lastPoint.x > columns || lastPoint.y < 0 || lastPoint.y > rows) {
+                                lastPoint.x = -1; //RESET
+                                int rndColor = 90 + rand() % 7 + 1;
+                                if(rndColor == 93)
+                                        rndColor = 33;
+                                wprintf(L"\x1b[%dm", rndColor);
+                                if(count > rows * columns / 2) {
+                                        system("clear");
+                                        count = 0;
+                                }
+                        }
 
-		usleep(time);
-		count++;
+                lastDir = dir;
+                if(rand() % 10 == 0) {
+                        if(rand() % 2 == 0)
+                                dir = (dir + 1) % 4;
+                        else
+                                dir = (dir - 1 + 4) % 4;
+                }
+
+                int time = 8000;
+                if(dir == Up || dir == Down)
+                        time *= 3;
+
+                usleep(time);
+                count++;
         }
-	return 0;
+        return 0;
 }
