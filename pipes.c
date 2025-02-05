@@ -16,6 +16,8 @@ struct point {
         short y;
 };
 
+int prob = 10;
+int delay = 10000;
 wchar_t charSet[] = L"┃┏┓┛━┗";
 int rows, columns;
 struct winsize w;
@@ -103,6 +105,29 @@ int main() {
         lastPoint.y = rows / 2;
         int count = 0;
         while (1) {
+                if(keyDown()) {
+                char c = getChar();
+                switch(c) {
+                        case '+':
+                                if(prob > 2)
+                                        prob--;
+                                break;
+                        case '-':
+                                if(prob < 100)
+                                        prob++;
+                                break;
+                        case 'e':
+                                if(delay > 500)
+                                        delay -= 500;
+                                break;
+                        case 'q':
+                                if(delay < 50000)
+                                        delay += 500;
+                                break;
+                        default:
+                                break;
+                }
+                }
                 checkWindowDimensions();
                 if(lastPoint.x == -1) {
                         short x = 0, y = 0;
@@ -178,18 +203,14 @@ int main() {
                         }
 
                 lastDir = dir;
-                if(rand() % 10 == 0) {
+
+                if(rand() % prob == 0) {
                         if(rand() % 2 == 0)
                                 dir = (dir + 1) % 4;
                         else
                                 dir = (dir - 1 + 4) % 4;
                 }
-
-                int time = 8000;
-                if(dir == Up || dir == Down)
-                        time *= 3;
-
-                usleep(time);
+                usleep(delay);
                 count++;
         }
         return 0;
